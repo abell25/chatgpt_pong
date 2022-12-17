@@ -1,0 +1,184 @@
+<html>
+  <head>
+    <title>My HTML5 Canvas Game</title>
+  </head>
+  <body>
+    <canvas id="pong-canvas" width="400" height="300"></canvas>
+    <script>
+
+const canvas = document.getElementById('pong-canvas');
+const ctx = canvas.getContext('2d');
+
+let player1Score = 0;
+let player2Score = 0;
+let gameOver = false;
+
+const ballRadius = 10;
+let x = canvas.width / 2;
+let y = canvas.height / 2;
+let dx = 2;
+let dy = -2;
+
+const paddleHeight = 75;
+const paddleWidth = 10;
+let paddle1Y = (canvas.height - paddleHeight) / 2;
+let paddle2Y = (canvas.height - paddleHeight) / 2;
+
+let wPressed = false;
+let sPressed = false;
+let upPressed = false;
+let downPressed = false;
+
+
+function moveBall() {
+  // Collision detection with the paddles
+  if (x + dx > canvas.width - ballRadius - paddleWidth &&
+      y > paddle2Y && y < paddle2Y + paddleHeight) {
+    dx = -dx;
+  } else if (x + dx < ballRadius + paddleWidth &&
+             y > paddle1Y && y < paddle1Y + paddleHeight) {
+    dx = -dx;
+  }
+
+  // Collision detection with the walls
+  if (y + dy < ballRadius || y + dy > canvas.height - ballRadius) {
+    dy = -dy;
+  }
+
+  // Update the ball's position
+  x += dx;
+  y += dy;
+
+  // Check if the ball went offscreen
+  if (x + dx > canvas.width || x + dx < 0) {
+    // Increment the score of the appropriate player
+    if (x + dx > canvas.width) {
+      player1Score++;
+    } else {
+      player2Score++;
+    }
+
+    // BUG: this logic was before the ball offscreen logic above, causing the point to always go to player 2.
+    // Reset the ball's position and velocity
+    x = canvas.width / 2;
+    y = canvas.height / 2;
+    dx = -dx;
+    dy = -dy;
+
+    if (player1Score === 5 || player2Score === 5) {
+      gameOver = true;
+    }
+  }
+}
+
+function movePaddle1() {
+  if (wPressed && paddle1Y > 0) {
+    paddle1Y -= 7;
+  } else if (sPressed && paddle1Y < canvas.height - paddleHeight) {
+    paddle1Y += 7;
+  }
+}
+
+function movePaddle2() {
+  if (upPressed && paddle2Y > 0) {
+    paddle2Y -= 7;
+  } else if (downPressed && paddle2Y < canvas.height - paddleHeight) {
+    paddle2Y += 7;
+  }
+}
+
+function drawBall() {
+  ctx.beginPath();
+  ctx.arc(x, y, ballRadius, 0, Math.PI * 2);
+  ctx.fillStyle = '#0095DD';
+  ctx.fill();
+  ctx.closePath();
+}
+
+function drawPaddle1() {
+  ctx.beginPath();
+  ctx.rect(0, paddle1Y, paddleWidth, paddleHeight);
+  ctx.fillStyle = '#0095DD';
+  ctx.fill();
+  ctx.closePath();
+}
+
+function drawPaddle2() {
+  ctx.beginPath();
+  ctx.rect(canvas.width - paddleWidth, paddle2Y, paddleWidth, paddleHeight);
+  ctx.fillStyle = '#0095DD';
+  ctx.fill();
+  ctx.closePath();
+}
+
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (!gameOver) {
+    moveBall();
+    drawBall();
+    movePaddle1();
+    movePaddle2();
+    drawPaddle1();
+    drawPaddle2();
+
+
+    // Draw the scores
+    ctx.font = '16px Arial';
+    ctx.fillStyle = '#0095DD';
+    ctx.fillText(`Player 1: ${player1Score}`, 8, 20);
+    ctx.fillText(`Player 2: ${player2Score}`, canvas.width - 85, 20);
+  } else {
+    ctx.font = '64px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2); 
+
+    const boxY = canvas.height - 50;
+    // ctx.fillRect(100, boxY, 200, 50);
+    ctx.font = '32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('Replay?', 200, boxY + 25);
+
+    canvas.addEventListener('click', function clickHandler(event) {
+      gameOver = false;
+      player1Score = 0;
+      player2Score = 0;
+      canvas.removeEventListener("click", clickHandler);
+    });
+
+  }
+}
+
+setInterval(draw, 10);
+
+function keyDownHandler(e) {
+  if (e.keyCode === 87) {
+    wPressed = true;
+  } else if (e.keyCode === 83) {
+    sPressed = true;
+  } else if (e.keyCode === 38) {
+    upPressed = true;
+  } else if (e.keyCode === 40) {
+    downPressed = true;
+  }
+}
+
+function keyUpHandler(e) {
+  if (e.keyCode === 87) {
+    wPressed = false;
+  } else if (e.keyCode === 83) {
+    sPressed = false;
+  } else if (e.keyCode === 38) {
+    upPressed = false;
+  } else if (e.keyCode === 40) {
+    downPressed = false;
+  }
+}     
+
+document.addEventListener('keydown', keyDownHandler, false);
+document.addEventListener('keyup', keyUpHandler, false);
+
+
+    </script>
+  </body>
+</html>
